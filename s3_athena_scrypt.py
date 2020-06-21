@@ -151,7 +151,7 @@ bucket_agg = s3.Bucket('teste-nina-agg')
 #Uploading the csv to s3
 bucket_agg.upload_file('./covid-brasil-agg.csv', 'covid-brasil-agg-report.csv')
 
-table_name_agg = 'Covid aggregation data'
+table_name_agg = 'aggregation'
 location_data_agg = 's3://teste-nina-agg/'
 
 #Creating the new table for the aggregation

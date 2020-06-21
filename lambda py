@@ -1,0 +1,71 @@
+import json
+import time
+import boto3
+
+#Constant for retry to make the query
+RETRY_COUNT = 10
+
+
+def lambda_handler(event, context):
+
+    client = boto3.client('athena')
+    query='select * from aggregation;'
+    S3_OUTPUT='s3://teste-nina-results/'
+
+    # Making the query
+    response = client.start_query_execution(
+        QueryString=query,
+        QueryExecutionContext={
+            'Database': 'nina-teste'
+        },
+        ResultConfiguration={
+            'OutputLocation': S3_OUTPUT,
+        }
+    )
+
+    # Get query execution id
+    query_execution_id = response['QueryExecutionId']
+    print(query_execution_id)
+
+    # Get execution status
+    for i in range(1, 1 + RETRY_COUNT):
+
+        # Get query execution
+        query_status = client.get_query_execution(QueryExecutionId=query_execution_id)
+        query_execution_status = query_status['QueryExecution']['Status']['State']
+
+        if query_execution_status == 'SUCCEEDED':
+            print("STATUS:" + query_execution_status)
+            break
+
+        if query_execution_status == 'FAILED':
+            raise Exception("STATUS:" + query_execution_status)
+
+        else:
+            print("STATUS:" + query_execution_status)
+            time.sleep(i)
+    else:
+        client.stop_query_execution(QueryExecutionId=query_execution_id)
+        raise Exception('TIME OVER')
+
+    # Get query results
+    result = client.get_query_results(QueryExecutionId=query_execution_id)
+
+    #Creating the object with the results of the query
+    if len(result['ResultSet']['Rows']) == 2:
+        confirmed = result['ResultSet']['Rows'][1]['Data'][0]['VarCharValue']
+        deaths = result['ResultSet']['Rows'][1]['Data'][1]['VarCharValue']
+        recovered = result['ResultSet']['Rows'][1]['Data'][2]['VarCharValue']
+        active = result['ResultSet']['Rows'][1]['Data'][3]['VarCharValue']
+        letality = result['ResultSet']['Rows'][1]['Data'][4]['VarCharValue']
+        
+        return {
+            'statusCode': 200,
+            'confirmed': confirmed,
+            'deaths': deaths,
+            'recovered': recovered,
+            'active': active,
+            'letality': letality
+        }
+    else:
+        return None
