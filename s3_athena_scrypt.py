@@ -1,7 +1,4 @@
 import boto3
-import os
-import requests
-import csv
 import pandas as pd
 from boto3 import client
 from pyathena import connect
