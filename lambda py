@@ -2,17 +2,17 @@ import json
 import time
 import boto3
 
-#Constant for retry to make the query
 RETRY_COUNT = 10
 
 
 def lambda_handler(event, context):
+    # TODO implement
 
     client = boto3.client('athena')
     query='select * from aggregation;'
     S3_OUTPUT='s3://teste-nina-results/'
 
-    # Making the query
+    # Execution
     response = client.start_query_execution(
         QueryString=query,
         QueryExecutionContext={
@@ -23,14 +23,14 @@ def lambda_handler(event, context):
         }
     )
 
-    # Get query execution id
+    # get query execution id
     query_execution_id = response['QueryExecutionId']
     print(query_execution_id)
 
-    # Get execution status
+    # get execution status
     for i in range(1, 1 + RETRY_COUNT):
 
-        # Get query execution
+        # get query execution
         query_status = client.get_query_execution(QueryExecutionId=query_execution_id)
         query_execution_status = query_status['QueryExecution']['Status']['State']
 
@@ -48,10 +48,10 @@ def lambda_handler(event, context):
         client.stop_query_execution(QueryExecutionId=query_execution_id)
         raise Exception('TIME OVER')
 
-    # Get query results
+    # get query results
     result = client.get_query_results(QueryExecutionId=query_execution_id)
-
-    #Creating the object with the results of the query
+    print(result['ResultSet']['Rows'][1]['Data'][1]['VarCharValue'])
+    
     if len(result['ResultSet']['Rows']) == 2:
         confirmed = result['ResultSet']['Rows'][1]['Data'][0]['VarCharValue']
         deaths = result['ResultSet']['Rows'][1]['Data'][1]['VarCharValue']
@@ -61,11 +61,15 @@ def lambda_handler(event, context):
         
         return {
             'statusCode': 200,
-            'confirmed': confirmed,
-            'deaths': deaths,
-            'recovered': recovered,
-            'active': active,
-            'letality': letality
+            'body': json.dumps({
+                'confirmed': confirmed,
+                'deaths': deaths,
+                'recovered': recovered,
+                'active': active,
+                'letality': letality
+            }),
+            
         }
-    else:
-        return None
+    else: return {
+        'statusCode': 404
+    }
