@@ -7,7 +7,6 @@ from boto3 import client
 from pyathena import connect
 from pyathena.util import as_pandas
 
-
 #Creating Bucket
 region='us-east-1'
 s3_client = boto3.client('s3', region_name=region)
@@ -23,12 +22,13 @@ account_id = boto3.client('sts').get_caller_identity().get('Account')
 csv_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/06-18-2020.csv'
 df = pd.read_csv(csv_url)   
 
-
 #Removing columns not so useful for now
 df = df.loc[:, ['Province_State', 'Country_Region', 'Confirmed', 'Deaths', 'Recovered', 'Active', 'Incidence_Rate', 'Case-Fatality_Ratio']]
 
 #Filtering to just show the Brazil's numbers
 df = df.query('Country_Region.str.contains("Brazil")')
+
+#Setting the types for each column
 df.loc[:, 'Confirmed'] = df['Confirmed'].astype(int)
 df.loc[:, 'Deaths'] = df['Deaths'].astype(int)
 df.loc[:, 'Recovered'] = df['Recovered'].astype(int)
@@ -37,8 +37,7 @@ df.loc[:, 'Province_State'] = df['Province_State'].astype(str).str.lower()
 df.loc[:, 'Country_Region'] = df['Country_Region'].astype(str).str.lower()
 df.loc[:, 'Incidence_Rate'] = df['Incidence_Rate'].astype(float)
 df.loc[:, 'Case-Fatality_Ratio'] = df['Case-Fatality_Ratio'].astype(float)
-print(df)
-
+# print(df)
 
 df.to_csv('covid-brasil-data.csv', index=False, header=False)
 
@@ -134,11 +133,9 @@ df_sql = as_pandas(cursor)
 
 # print(df_sql.head(5))
 
-
 #Creating aggregation dataset fot the total Deaths, Total cases, Total of recovers and all that still active
 df_agg = df.agg({'Confirmed': ['sum'], 'Deaths': ['sum'], 'Recovered': ['sum'], 'Active': ['sum']})
 # print(df_agg)
-
 
 #Calculating the letality of covid in Brazil
 def calc_letality(row):
