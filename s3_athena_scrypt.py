@@ -34,7 +34,6 @@ df.loc[:, 'Province_State'] = df['Province_State'].astype(str).str.lower()
 df.loc[:, 'Country_Region'] = df['Country_Region'].astype(str).str.lower()
 df.loc[:, 'Incidence_Rate'] = df['Incidence_Rate'].astype(float)
 df.loc[:, 'Case-Fatality_Ratio'] = df['Case-Fatality_Ratio'].astype(float)
-# print(df)
 
 df.to_csv('covid-brasil-data.csv', index=False, header=False)
 
@@ -128,18 +127,14 @@ cursor.execute('SELECT * FROM "nina-teste"."covid data" limit 10;'.format(databa
 
 df_sql = as_pandas(cursor)
 
-# print(df_sql.head(5))
-
 #Creating aggregation dataset fot the total Deaths, Total cases, Total of recovers and all that still active
 df_agg = df.agg({'Confirmed': ['sum'], 'Deaths': ['sum'], 'Recovered': ['sum'], 'Active': ['sum']})
-# print(df_agg)
 
 #Calculating the letality of covid in Brazil
 def calc_letality(row):
     return row['Deaths'] / row['Confirmed'] * 100
 
 df_agg['Letality'] = df_agg.apply(calc_letality, axis=1)
-# print(df_agg)
 
 df_agg.to_csv('covid-brasil-agg.csv', index=False, header=False)
 
@@ -210,8 +205,7 @@ response = glue_client.create_table(
 
 #Making a query in the aggregation
 cursor = connect(region_name=region, s3_staging_dir='s3://teste-nina/').cursor()
-cursor.execute('SELECT * FROM "nina-teste"."covid aggregation data" limit 10;'.format(database_name, table_name_agg))
+cursor.execute('SELECT * FROM "nina-teste"."aggregation" limit 10;'.format(database_name, table_name_agg))
 
 df_sql_agg = as_pandas(cursor)
 
-# print(df_sql_agg.head(5))
