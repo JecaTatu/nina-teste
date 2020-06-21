@@ -6,8 +6,6 @@ RETRY_COUNT = 10
 
 
 def lambda_handler(event, context):
-    # TODO implement
-
     client = boto3.client('athena')
     query='select * from aggregation;'
     S3_OUTPUT='s3://teste-nina-results/'
